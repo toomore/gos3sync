@@ -15,16 +15,16 @@ func md5sum(f *os.File) []byte {
 	return hash.Sum(nil)
 }
 
-func walkfeed(path string, info os.FileInfo, err error) error {
+var hashPath = make(map[string]string)
+
+func walkfunc(path string, info os.FileInfo, err error) error {
 	if err == nil {
-		if info.IsDir() {
-			fmt.Println("Folder: ", path)
-		} else {
-			fmt.Println(info.Mode().String(), info.IsDir(), path, info.Size())
+		if !info.IsDir() {
 			f, err := os.Open(path)
 			defer f.Close()
 			if err == nil {
-				fmt.Printf("%x\n", md5sum(f))
+				hashsum := fmt.Sprintf("%x", md5sum(f))
+				hashPath[hashsum] = path
 			}
 		}
 	} else {
@@ -34,6 +34,10 @@ func walkfeed(path string, info os.FileInfo, err error) error {
 }
 
 func main() {
-	err := filepath.Walk("./", walkfeed)
-	fmt.Println(err)
+	if err := filepath.Walk("./", walkfunc); err != nil {
+		fmt.Println(err)
+	}
+	for k, v := range hashPath {
+		fmt.Println(k, v)
+	}
 }
