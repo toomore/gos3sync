@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -25,6 +26,7 @@ func walkfunc(path string, info os.FileInfo, err error) error {
 			if err == nil {
 				hashsum := fmt.Sprintf("%x", md5sum(f))
 				hashPath[hashsum] = path
+				fmt.Printf(".")
 			}
 		}
 	} else {
@@ -34,8 +36,14 @@ func walkfunc(path string, info os.FileInfo, err error) error {
 }
 
 func main() {
-	if err := filepath.Walk("./", walkfunc); err != nil {
-		fmt.Println(err)
+	flag.Parse()
+	for _, path := range flag.Args() {
+		if err := filepath.Walk(path, walkfunc); err != nil {
+			fmt.Println(err)
+		}
+	}
+	if len(hashPath) > 0 {
+		fmt.Println()
 	}
 	for k, v := range hashPath {
 		fmt.Println(k, v)
