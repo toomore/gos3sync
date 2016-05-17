@@ -2,9 +2,11 @@ package main
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -24,8 +26,7 @@ func walkfunc(path string, info os.FileInfo, err error) error {
 			f, err := os.Open(path)
 			defer f.Close()
 			if err == nil {
-				hashsum := fmt.Sprintf("%x", md5sum(f))
-				hashPath[hashsum] = path
+				hashPath[string(md5sum(f))] = path
 				fmt.Printf(".")
 			}
 		}
@@ -33,6 +34,10 @@ func walkfunc(path string, info os.FileInfo, err error) error {
 		log.Println(err)
 	}
 	return nil
+}
+
+func saveData(filename string, data []byte) error {
+	return ioutil.WriteFile(filename, data, os.ModePerm)
 }
 
 func main() {
@@ -44,8 +49,23 @@ func main() {
 	}
 	if len(hashPath) > 0 {
 		fmt.Println()
-	}
-	for k, v := range hashPath {
-		fmt.Println(k, v)
+		var _data = make([]byte, 0, 100)
+		for k, v := range hashPath {
+			fmt.Println([]byte(k))
+			fmt.Println(v)
+			//_data = append(_data, fmt.Sprintf("%x", k)...)
+			_data = append(_data, hex.EncodeToString([]byte(k))...)
+			_data = append(_data, "\n"...)
+		}
+		f, err := os.Create("tt.txt")
+		defer f.Close()
+		if err == nil {
+			fmt.Printf("%x", _data)
+			//f.Write([]byte(fmt.Sprintf("%x", _data)))
+			f.Write(_data)
+		} else {
+			log.Println(">>>>", err)
+		}
+		fmt.Println(saveData("t.txt", _data))
 	}
 }
