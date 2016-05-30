@@ -10,10 +10,18 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/codahale/blake2"
 )
 
 func md5sum(f *os.File) []byte {
 	hash := md5.New()
+	io.Copy(hash, f)
+	return hash.Sum(nil)
+}
+
+func blake2sum(f io.Reader) []byte {
+	hash := blake2.New(nil)
 	io.Copy(hash, f)
 	return hash.Sum(nil)
 }
@@ -26,7 +34,8 @@ func walkfunc(path string, info os.FileInfo, err error) error {
 			f, err := os.Open(path)
 			defer f.Close()
 			if err == nil {
-				hashPath[string(md5sum(f))] = path
+				//hashPath[string(md5sum(f))] = path
+				hashPath[string(blake2sum(f))] = path
 				fmt.Printf(".")
 			}
 		}
@@ -51,8 +60,8 @@ func main() {
 		fmt.Println()
 		var _data = make([]byte, 0, 100)
 		for k, v := range hashPath {
-			fmt.Println([]byte(k))
-			fmt.Println(v)
+			fmt.Println("Key: ", []byte(k))
+			fmt.Println("Path: ", v)
 			//_data = append(_data, fmt.Sprintf("%x", k)...)
 			_data = append(_data, hex.EncodeToString([]byte(k))...)
 			_data = append(_data, "\n"...)
@@ -60,12 +69,12 @@ func main() {
 		f, err := os.Create("tt.txt")
 		defer f.Close()
 		if err == nil {
-			fmt.Printf("%x", _data)
+			//fmt.Printf("%x", _data)
 			//f.Write([]byte(fmt.Sprintf("%x", _data)))
 			f.Write(_data)
 		} else {
 			log.Println(">>>>", err)
 		}
-		fmt.Println(saveData("t.txt", _data))
+		saveData("t.txt", _data)
 	}
 }
