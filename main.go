@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/toomore/awss3sync/hashlib"
+	"github.com/toomore/gos3sync/hashlib"
 )
 
 var hashPath = make(map[string]string)
@@ -48,6 +48,8 @@ func main() {
 			fmt.Println("Path: ", v)
 			//_data = append(_data, fmt.Sprintf("%x", k)...)
 			_data = append(_data, hashlib.String([]byte(k))...)
+			_data = append(_data, " "...)
+			_data = append(_data, []byte(v)...)
 			_data = append(_data, "\n"...)
 		}
 		f, err := os.Create("tt.txt")
