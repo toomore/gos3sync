@@ -31,18 +31,16 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
 		return err
 	}
 
-	err = env.SetMapSize(1 << 20)
-	if err != nil {
+	if err = env.SetMapSize(1 << 20); err != nil {
 		return err
 	}
 
-	err = env.SetMaxDBs(1) // Must set.
-	if err != nil {
+	// Must set.
+	if err = env.SetMaxDBs(1); err != nil {
 		return err
 	}
 
-	err = env.Open(dir, 0, 0664)
-	if err != nil {
+	if err = env.Open(dir, 0, 0664); err != nil {
 		return err
 	}
 
@@ -60,7 +58,9 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
 // NewDB new one
 func NewDB(name string, dir string) *Ldb {
 	var dbi lmdb.DBI
-	openDatabase(dir, name, &dbi)
+	if err := openDatabase(dir, name, &dbi); err != nil {
+		log.Panicln(err)
+	}
 	return &Ldb{Name: name, dbi: dbi}
 }
 
