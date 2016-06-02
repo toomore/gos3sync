@@ -26,22 +26,24 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
 		log.Println("Create db dir: ", dir)
 	}
 
-	env, err = lmdb.NewEnv()
-	if err != nil {
-		return err
-	}
+	if env == nil {
+		env, err = lmdb.NewEnv()
+		if err != nil {
+			return err
+		}
 
-	if err = env.SetMapSize(1 << 20); err != nil {
-		return err
-	}
+		if err = env.SetMapSize(1 << 20); err != nil {
+			return err
+		}
 
-	// Must set.
-	if err = env.SetMaxDBs(1); err != nil {
-		return err
-	}
+		// Must set, but need to fix value.
+		if err = env.SetMaxDBs(3); err != nil {
+			return err
+		}
 
-	if err = env.Open(dir, 0, 0664); err != nil {
-		return err
+		if err = env.Open(dir, 0, 0600); err != nil {
+			return err
+		}
 	}
 
 	err = env.Update(func(txn *lmdb.Txn) (err error) {
