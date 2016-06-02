@@ -11,6 +11,9 @@ import (
 	"github.com/toomore/gos3sync/hashlib"
 )
 
+// FILEMOD default
+const FILEMOD = 0600
+
 var hashPath = make(map[string]string)
 
 func walkfunc(path string, info os.FileInfo, err error) error {
@@ -30,7 +33,7 @@ func walkfunc(path string, info os.FileInfo, err error) error {
 }
 
 func saveData(filename string, data []byte) error {
-	return ioutil.WriteFile(filename, data, os.ModePerm)
+	return ioutil.WriteFile(filename, data, FILEMOD)
 }
 
 func main() {
@@ -54,6 +57,8 @@ func main() {
 		}
 		f, err := os.Create("tt.txt")
 		defer f.Close()
+		f.Chmod(FILEMOD)
+
 		if err == nil {
 			//fmt.Printf("%x", _data)
 			//f.Write([]byte(fmt.Sprintf("%x", _data)))
