@@ -75,8 +75,13 @@ func (l Ldb) Put(key []byte, val []byte) error {
 
 // Get data
 func (l Ldb) Get(key []byte) ([]byte, error) {
-	txn, _ := env.BeginTxn(nil, lmdb.Readonly)
-	val, err := txn.Get(l.dbi, key)
+	var val []byte
+	var err error
+
+	err = env.View(func(txn *lmdb.Txn) (err error) {
+		val, err = txn.Get(l.dbi, key)
+		return err
+	})
 	if err != nil && !lmdb.IsNotFound(err) {
 		return nil, err
 	}
