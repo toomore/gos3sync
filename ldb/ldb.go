@@ -15,7 +15,7 @@ type Ldb struct {
 	dbi  lmdb.DBI
 }
 
-func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
+func openDatabase(dir string, name string, dbi *lmdb.DBI, flags uint) error {
 	var err error
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, os.ModeDir|os.ModePerm)
@@ -37,7 +37,7 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
 		}
 
 		// Must set, but need to fix value.
-		if err = env.SetMaxDBs(3); err != nil {
+		if err = env.SetMaxDBs(4); err != nil {
 			return err
 		}
 
@@ -47,7 +47,7 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
 	}
 
 	err = env.Update(func(txn *lmdb.Txn) (err error) {
-		*dbi, err = txn.OpenDBI(name, lmdb.Create)
+		*dbi, err = txn.OpenDBI(name, lmdb.Create|flags)
 		return err
 	})
 	if err != nil {
@@ -58,9 +58,9 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI) error {
 }
 
 // NewDB new one
-func NewDB(name string, dir string) *Ldb {
+func NewDB(name string, dir string, flags uint) *Ldb {
 	var dbi lmdb.DBI
-	if err := openDatabase(dir, name, &dbi); err != nil {
+	if err := openDatabase(dir, name, &dbi, flags); err != nil {
 		log.Panicln(err)
 	}
 	return &Ldb{Name: name, dbi: dbi}
@@ -86,4 +86,30 @@ func (l Ldb) Get(key []byte) ([]byte, error) {
 		return nil, err
 	}
 	return val, err
+}
+
+// CGet is Cursor get
+func (l Ldb) CGet(setkey, setval []byte) ([][]byte, error) {
+	var cur *lmdb.Cursor
+	var data [][]byte
+	var err error
+
+	data = make([][]byte, 0)
+
+	err = env.View(func(txn *lmdb.Txn) (err error) {
+		cur, err = txn.OpenCursor(l.dbi)
+		if err != nil {
+			return err
+		}
+
+		for {
+			_, val, err := cur.Get(setkey, setval, lmdb.NextDup)
+			if lmdb.IsNotFound(err) {
+				break
+			}
+			data = append(data, val)
+		}
+		return nil
+	})
+	return data, err
 }
