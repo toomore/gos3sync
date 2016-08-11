@@ -55,17 +55,8 @@ func main() {
 			_data = append(_data, []byte(v)...)
 			_data = append(_data, "\n"...)
 		}
-		f, err := os.Create("tt.txt")
-		defer f.Close()
-		f.Chmod(FILEMOD)
-
-		if err == nil {
-			//fmt.Printf("%x", _data)
-			//f.Write([]byte(fmt.Sprintf("%x", _data)))
-			f.Write(_data)
-		} else {
-			log.Println(">>>>", err)
+		if err := saveData("t.txt", _data); err != nil {
+			log.Println("Error save", err)
 		}
-		saveData("t.txt", _data)
 	}
 }
