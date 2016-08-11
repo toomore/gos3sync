@@ -9,6 +9,8 @@ import (
 	"github.com/toomore/gos3sync/hashlib"
 )
 
+var outputFilename = flag.String("o", "result.txt", "output data")
+
 func main() {
 	flag.Parse()
 	for _, path := range flag.Args() {
@@ -25,7 +27,7 @@ func main() {
 				_data = append(_data, []byte(v)...)
 				_data = append(_data, "\n"...)
 			}
-			if err := ioutil.WriteFile("t.txt", _data, 0600); err != nil {
+			if err := ioutil.WriteFile(*outputFilename, _data, 0600); err != nil {
 				log.Println("Error save", err)
 			}
 		}
