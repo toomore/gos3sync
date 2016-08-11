@@ -9,24 +9,6 @@ import (
 	"github.com/toomore/gos3sync/hashlib"
 )
 
-//var hashPath = make(map[string]string)
-//
-//func walkfunc(path string, info os.FileInfo, err error) error {
-//	if err == nil {
-//		if !info.IsDir() {
-//			f, err := os.Open(path)
-//			defer f.Close()
-//			if err == nil {
-//				hashPath[string(hashlib.Sum(f))] = path
-//				fmt.Printf(".")
-//			}
-//		}
-//	} else {
-//		log.Println(err)
-//	}
-//	return nil
-//}
-
 func main() {
 	flag.Parse()
 	for _, path := range flag.Args() {
