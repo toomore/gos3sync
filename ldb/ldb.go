@@ -50,11 +50,7 @@ func openDatabase(dir string, name string, dbi *lmdb.DBI, flags uint) error {
 		*dbi, err = txn.OpenDBI(name, lmdb.Create|flags)
 		return err
 	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // NewDB new one
@@ -89,27 +85,41 @@ func (l Ldb) Get(key []byte) ([]byte, error) {
 }
 
 // CGet is Cursor get
-func (l Ldb) CGet(setkey, setval []byte) ([][]byte, error) {
+func (l Ldb) CGet(setkey, setval []byte, data chan []byte) {
 	var cur *lmdb.Cursor
-	var data [][]byte
-	var err error
 
-	data = make([][]byte, 0)
+	//data = make([][]byte, 0)
 
-	err = env.View(func(txn *lmdb.Txn) (err error) {
+	env.View(func(txn *lmdb.Txn) (err error) {
 		cur, err = txn.OpenCursor(l.dbi)
 		if err != nil {
 			return err
 		}
 
-		for {
-			_, val, err := cur.Get(setkey, setval, lmdb.NextDup)
-			if lmdb.IsNotFound(err) {
-				break
+		go func(cur *lmdb.Cursor) {
+			for {
+				_, val, err := cur.Get(setkey, setval, lmdb.NextNoDup)
+
+				if err != nil {
+					if !lmdb.IsNotFound(err) {
+						log.Println(err)
+					}
+					close(data)
+					break
+				} else {
+					data <- val
+				}
+				for {
+					_, val, err := cur.Get(setkey, setval, lmdb.NextDup)
+					if lmdb.IsNotFound(err) {
+						log.Println(err)
+						break
+					} else if err == nil {
+						data <- val
+					}
+				}
 			}
-			data = append(data, val)
-		}
-		return nil
+		}(cur)
+		return err
 	})
-	return data, err
 }

@@ -71,10 +71,10 @@ func TestLdbPut_dupkey(t *testing.T) {
 		db.Put([]byte("key1"), []byte("1"))
 		db.Put([]byte("key1"), []byte("2"))
 
-		val, err := db.CGet([]byte("key1"), nil)
-		t.Log(val, err)
-		if !bytes.Equal(val[1], []byte("2")) {
-			t.Fatal("Should be `2`")
+		data := make(chan []byte)
+		db.CGet([]byte("key1"), nil, data)
+		for val := range data {
+			t.Log(val)
 		}
 	}
 }
