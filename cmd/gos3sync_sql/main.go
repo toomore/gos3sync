@@ -30,6 +30,12 @@ func main() {
 		syncdb.Init(flag.Arg(1))
 	case "path":
 		log.Println(filepath.Abs("./"))
+	case "add":
+		log.Println("Do add file")
+	case "commit":
+		log.Println("Save to index")
+	case "push":
+		log.Println("Upload to AWS S3")
 	default:
 		showHelp()
 	}
