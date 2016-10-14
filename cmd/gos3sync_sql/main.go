@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/toomore/gos3sync"
 	"github.com/toomore/gos3sync/syncdb"
 )
 
@@ -31,6 +32,9 @@ func main() {
 	case "path":
 		log.Println(filepath.Abs("./"))
 	case "add":
+		fw := &gos3sync.FileWalk{}
+		fw.Walk(flag.Arg(1))
+		log.Println(fw.Paths)
 		log.Println("Do add file")
 	case "commit":
 		log.Println("Save to index")
