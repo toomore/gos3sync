@@ -20,5 +20,5 @@ func (f *FileWalk) WalkFunc(path string, info os.FileInfo, err error) error {
 	if err == nil {
 		f.Paths = append(f.Paths, path)
 	}
-	return err
+	return nil
 }
