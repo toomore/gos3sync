@@ -19,6 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/toomore/gos3sync"
+	"github.com/toomore/gos3sync/syncdb"
 )
 
 // addCmd represents the add command
@@ -32,6 +33,11 @@ var addCmd = &cobra.Command{
 			fw := &gos3sync.FileWalk{}
 			fw.Walk(args[0])
 			fmt.Println(len(fw.Paths))
+			db := syncdb.ConnDB("./")
+			defer db.Close()
+			for i, path := range fw.Paths {
+				syncdb.InsertIndex(db, path, fmt.Sprintf("[%s]", i))
+			}
 		}
 	},
 }

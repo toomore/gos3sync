@@ -28,6 +28,14 @@ func initTable(db *sql.DB) {
 	}
 }
 
+// InsertIndex save data into index
+func InsertIndex(db *sql.DB, path string, hex string) {
+	tx, _ := db.Begin()
+	tx.Prepare(`insert into idx(path, hex) values(?, ?)`)
+	tx.Exec(path, hex)
+	tx.Commit()
+}
+
 // Init init all
 func Init(path string) {
 	var err error

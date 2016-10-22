@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/toomore/gos3sync/syncdb"
 )
 
 // initCmd represents the init command
@@ -16,7 +17,7 @@ var initCmd = &cobra.Command{
 		fmt.Println("init called", args, cmd.Flags().Lookup("name").Value)
 		if len(args) == 1 {
 			log.Println(cmd.CommandPath())
-			//syncdb.Init(args[0])
+			syncdb.Init(args[0])
 		}
 	},
 }
