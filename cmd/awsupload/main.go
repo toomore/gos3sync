@@ -23,9 +23,14 @@ type fileinfo struct {
 }
 
 var (
-	filelist []*fileinfo
-	path     = flag.String("p", "", "Path")
-	dryRun   = flag.Bool("d", false, "Dry run")
+	concurrency = flag.Int("c", 20, "Concurrency")
+	dryRun      = flag.Bool("d", false, "Dry run")
+	path        = flag.String("p", "", "Path")
+
+	filelist  chan *fileinfo
+	uploadnum chan struct{}
+
+	wg sync.WaitGroup
 )
 
 func getSession() *session.Session {
@@ -46,12 +51,16 @@ func walkFunc(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
-		filelist = append(filelist, &fileinfo{path: path, info: info})
+		go func() {
+			wg.Add(1)
+			filelist <- &fileinfo{path: path, info: info}
+		}()
 	}
 	return nil
 }
 
 func uploadfile(sess *session.Session, f fileinfo, wg *sync.WaitGroup) {
+	uploadnum <- struct{}{}
 	defer wg.Done()
 
 	data, _ := ioutil.ReadFile(f.path)
@@ -65,14 +74,15 @@ func uploadfile(sess *session.Session, f fileinfo, wg *sync.WaitGroup) {
 	up := s3.New(sess)
 	log.Println("Upload:", f.path)
 	if *dryRun {
-		log.Println(f.path, fhex)
+		log.Println("[DryRun]", f.path, fhex)
 	} else {
 		if resp, err := up.PutObject(params); err != nil {
-			log.Println("Err:", f.path, err)
+			log.Println("!Err:", f.path, err)
 		} else {
-			log.Println(f.path, fhex, *resp.ETag)
+			log.Println("[U.OK]", f.path, fhex, *resp.ETag)
 		}
 	}
+	<-uploadnum
 }
 
 func main() {
@@ -80,12 +90,15 @@ func main() {
 	if *path == "" {
 		log.Fatalln("Need Path")
 	}
+	filelist = make(chan *fileinfo, 6)
+	uploadnum = make(chan struct{}, *concurrency)
+
 	filepath.Walk(*path, walkFunc)
-	var wg sync.WaitGroup
-	wg.Add(len(filelist))
 	sess := getSession()
-	for _, f := range filelist {
-		go uploadfile(sess, *f, &wg)
-	}
+	go func() {
+		for f := range filelist {
+			go uploadfile(sess, *f, &wg)
+		}
+	}()
 	wg.Wait()
 }
