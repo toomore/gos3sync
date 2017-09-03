@@ -27,10 +27,10 @@ var (
 	dryRun      = flag.Bool("d", false, "Dry run")
 	path        = flag.String("p", "", "Path")
 
-	filelist  chan *fileinfo
 	uploadnum chan struct{}
 
-	wg sync.WaitGroup
+	sess *session.Session
+	wg   sync.WaitGroup
 )
 
 func getSession() *session.Session {
@@ -51,15 +51,15 @@ func walkFunc(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
-		go func() {
-			wg.Add(1)
-			filelist <- &fileinfo{path: path, info: info}
-		}()
+		wg.Add(1)
+		go uploadfile(sess, fileinfo{path: path, info: info})
+	} else {
+		log.Println(err)
 	}
 	return nil
 }
 
-func uploadfile(sess *session.Session, f fileinfo, wg *sync.WaitGroup) {
+func uploadfile(sess *session.Session, f fileinfo) {
 	uploadnum <- struct{}{}
 	defer wg.Done()
 
@@ -90,15 +90,9 @@ func main() {
 	if *path == "" {
 		log.Fatalln("Need Path")
 	}
-	filelist = make(chan *fileinfo, 6)
 	uploadnum = make(chan struct{}, *concurrency)
 
+	sess = getSession()
 	filepath.Walk(*path, walkFunc)
-	sess := getSession()
-	go func() {
-		for f := range filelist {
-			go uploadfile(sess, *f, &wg)
-		}
-	}()
 	wg.Wait()
 }
