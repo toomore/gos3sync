@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type fileinfo struct {
@@ -66,20 +66,20 @@ func uploadfile(sess *session.Session, f fileinfo) {
 	data, _ := ioutil.ReadFile(f.path)
 	fhex := fmt.Sprintf("%x", md5.Sum(data))
 
-	params := &s3.PutObjectInput{
-		Bucket: aws.String(os.Getenv("AWSUPLOADBUCKET")),
-		Key:    aws.String(f.path),
-		Body:   bytes.NewReader(data),
-	}
-	up := s3.New(sess)
 	log.Println("Upload:", f.path)
 	if *dryRun {
 		log.Println("[DryRun]", f.path, fhex)
 	} else {
-		if resp, err := up.PutObject(params); err != nil {
+		uploader := s3manager.NewUploader(sess)
+		params := &s3manager.UploadInput{
+			Bucket: aws.String(os.Getenv("AWSUPLOADBUCKET")),
+			Key:    aws.String(f.path),
+			Body:   bytes.NewReader(data),
+		}
+		if resp, err := uploader.Upload(params); err != nil {
 			log.Println("!Err:", f.path, err)
 		} else {
-			log.Println("[U.OK]", f.path, fhex, *resp.ETag)
+			log.Println("[U.OK]", f.path, fhex, resp)
 		}
 	}
 	<-uploadnum
